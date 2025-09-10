@@ -21,9 +21,8 @@
             font-family: 'Roboto', sans-serif;
         }
 
-        /* NEW: Emerald/teal background to differentiate from Sites dashboard */
         body {
-            background: radial-gradient(1100px 680px at 18% -5%, #0f5138 0%, #063a2c 40%, #042a23 100%);
+            background: radial-gradient(1000px 600px at 20% 0%, #1f3b73 0%, #0f1e3a 40%, #0b1220 100%);
             color: #e5e7eb;
             padding: 20px;
         }
@@ -42,21 +41,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, .12);
         }
 
-        /* Brand (logo + title) */
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand img {
-            height: 40px;
-            width: auto;
-            display: block;
-            filter: brightness(1.1) contrast(1.05);
-        }
-
-        .brand h1 {
+        h1 {
             color: #ffffff;
             font-weight: 800;
             letter-spacing: .2px;
@@ -68,28 +53,13 @@
             flex-wrap: wrap;
         }
 
-        /* NEW: Light controls so text is visible even before hover */
         .controls select {
-            padding: 10px 12px;
-            border: 1px solid rgba(15, 81, 56, .35);
-            border-radius: 10px;
-            background: #e8f5f1;
-            /* light mint background */
-            color: #0b2b22;
-            /* dark text */
-            font-weight: 600;
-            min-width: 180px;
-            outline: none;
-        }
-
-        .controls select:focus {
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, .25);
-        }
-
-        /* Ensure dropdown options are readable across browsers */
-        .controls select option {
-            color: #0b2b22;
-            background: #ffffff;
+            padding: 8px 10px;
+            border: 1px solid rgba(255, 255, 255, .2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .06);
+            color: #fff;
+            backdrop-filter: blur(6px);
         }
 
         .summary {
@@ -101,16 +71,10 @@
 
         .card {
             background: linear-gradient(160deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .06));
-            padding: 20px;
+            padding: 16px;
             border-radius: 14px;
             box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
             border: 1px solid rgba(255, 255, 255, .12);
-
-            /* NEW: center content inside cards */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
         }
 
         .card h3 {
@@ -132,7 +96,7 @@
         }
 
         .chart-container {
-            background: linear-gradient(180deg, rgba(10, 18, 16, .92), rgba(10, 18, 16, .84));
+            background: linear-gradient(180deg, rgba(17, 24, 39, .9), rgba(17, 24, 39, .8));
             padding: 16px;
             border-radius: 14px;
             box-shadow: 0 6px 22px rgba(0, 0, 0, .28);
@@ -231,14 +195,6 @@
             .export-buttons {
                 flex-direction: column;
             }
-
-            .brand h1 {
-                font-size: 1.1rem;
-            }
-
-            .brand img {
-                height: 32px;
-            }
         }
     </style>
 </head>
@@ -246,11 +202,7 @@
 <body>
     <div class="dashboard-container">
         <header>
-            <div class="brand">
-                <!-- Put your logo file next to this HTML and keep the name below or change src -->
-                <img src="ep-logo.png" alt="Equatorial Power logo" />
-                <h1>Equatorial Power – Countries Dashboard</h1>
-            </div>
+            <h1>Equatorial Power – Countries Dashboard</h1>
             <div class="controls">
                 <select id="countryFilter">
                     <option value="__ALL__">All Countries</option>
@@ -332,7 +284,7 @@
 
     <script>
         // ===== CONFIG: Countries CSV =====
-        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQprx65EoDU44iCaUeroSCc5difza-1mO4pF6eFyNfIsL0rESnstChFK652px5huTVfP_Xdrt6BY0vO/pub?gid=1715890045&single=true&output=csv";
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQprx65EoDU44iCaUeroSCc5difza-1mO4pF6eFyNfIsL0rESnstChFK652px5huTVf_PXdrt6BY0vO/pub?gid=1715890045&single=true&output=csv";
 
         // Column constants for Countries tab
         const ENTITY_FIELD = "Country";
@@ -385,7 +337,6 @@
             return `${monthNames[month]} ${year}`;
         }
 
-        // Simple CSV parser with quoted fields support
         function parseCSV(csvText) {
             const lines = csvText.replace(/\r/g, "").split("\n");
             if (!lines.length) return [];
@@ -456,6 +407,7 @@
             document.getElementById("avgARPU").textContent = (avgARPU ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
         }
 
+        // Grouping & helpers
         const groupByMonth = (rows) => {
             const m = {};
             rows.forEach(r => {
@@ -487,14 +439,13 @@
             return den ? num / den : 0;
         }
 
-        // Common chart options with data labels + legend at top
+        // Common chart options with data labels
         function makeCommonOptions({ yTitle = '', isPercent = false }) {
             return {
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: { padding: { top: 16 } }, /* general top padding to keep legend away */
                 plugins: {
-                    legend: { position: 'top', labels: { color: '#e5e7eb' } },
+                    legend: { labels: { color: '#e5e7eb' } },
                     datalabels: {
                         color: '#ffffff',
                         backgroundColor: 'rgba(0,0,0,.35)',
@@ -505,7 +456,7 @@
                         clamp: true,
                         anchor: 'end',
                         align: 'top',
-                        offset: 6
+                        offset: 4
                     },
                     tooltip: {
                         callbacks: {
@@ -626,11 +577,6 @@
 
             const ctx = document.getElementById("customersChart").getContext("2d");
             if (customersChart) customersChart.destroy();
-
-            // Use common options but give this busy chart extra top padding
-            const opts = makeCommonOptions({ yTitle: 'Customers' });
-            opts.layout.padding.top = 28;
-
             customersChart = new Chart(ctx, {
                 type: "bar",
                 data: {
@@ -641,7 +587,7 @@
                         { label: "Total Customers", data: total, backgroundColor: pal.third }
                     ]
                 },
-                options: opts
+                options: makeCommonOptions({ yTitle: 'Customers' })
             });
         }
 
@@ -664,14 +610,6 @@
 
             const ctx = document.getElementById("customerRatiosChart").getContext("2d");
             if (customerRatiosChart) customerRatiosChart.destroy();
-
-            // Extra space above to keep legend separate from labels
-            const opts = makeCommonOptions({ isPercent: true });
-            opts.layout.padding.top = 28;
-            // Give a little headroom above 100% so labels don't clip under the legend
-            opts.scales.y.suggestedMin = 0;
-            opts.scales.y.suggestedMax = 105;
-
             customerRatiosChart = new Chart(ctx, {
                 type: "line",
                 data: {
@@ -681,7 +619,7 @@
                         { label: "Active / Total (%)", data: activeTotalRatio, borderColor: pal.accent, backgroundColor: pal.fillB, fill: true, tension: 0.35 }
                     ]
                 },
-                options: opts
+                options: makeCommonOptions({ isPercent: true })
             });
         }
 
