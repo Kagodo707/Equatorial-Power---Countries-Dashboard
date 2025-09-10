@@ -588,7 +588,7 @@
           ]
         },
         options: opts
-      });
+      );
     }
 
     function renderConsumptionPerUser() {
@@ -747,7 +747,8 @@
       const countries = [...new Set(allData.map(r => r[ENTITY_FIELD]).filter(s => s && s !== ALL_ENTITY))].sort();
       populateFilter("countryFilter", countries);
       
-      // Set up date range filter listeners
+      // Set up event listeners for all filters
+      document.getElementById("countryFilter").addEventListener("change", applyFilters);
       document.getElementById("startDateFilter").addEventListener("change", applyFilters);
       document.getElementById("endDateFilter").addEventListener("change", applyFilters);
     }
