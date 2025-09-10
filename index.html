@@ -15,7 +15,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
 
-    /* NEW: Emerald/teal background to differentiate from Sites dashboard */
     body {
       background: radial-gradient(1100px 680px at 18% -5%, #0f5138 0%, #063a2c 40%, #042a23 100%);
       color: #e5e7eb;
@@ -28,38 +27,47 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 30px; padding-bottom: 15px;
       border-bottom: 1px solid rgba(255,255,255,.12);
+      gap: 16px;
     }
-    /* Brand (logo + title) */
+
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand img { height: 40px; width: auto; display: block; filter: brightness(1.1) contrast(1.05); }
     .brand h1 { color: #ffffff; font-weight: 800; letter-spacing: .2px; }
 
-    .controls { display: flex; gap: 12px; flex-wrap: wrap; }
+    /* === Controls row: one line on desktop, stacked on mobile === */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+      min-width: 540px;
+    }
 
-    /* NEW: Light controls so text is visible even before hover */
+    /* Light controls */
     .controls select, .controls input {
       padding: 10px 12px;
       border: 1px solid rgba(15,81,56,.35);
       border-radius: 10px;
-      background: #e8f5f1;     /* light mint background */
-      color: #0b2b22;           /* dark text */
+      background: #e8f5f1;
+      color: #0b2b22;
       font-weight: 600;
       min-width: 180px;
       outline: none;
+      width: 100%;
     }
     .controls select:focus, .controls input:focus { box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
-    /* Ensure dropdown options are readable across browsers */
     .controls select option { color: #0b2b22; background: #ffffff; }
 
     .date-range-container {
       display: flex;
       align-items: center;
       gap: 8px;
+      width: 100%;
     }
-
     .date-range-container span {
       color: #e8f5f1;
       font-weight: 600;
+      white-space: nowrap;
     }
 
     .summary {
@@ -71,8 +79,6 @@
       padding: 20px; border-radius: 14px;
       box-shadow: 0 6px 20px rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.12);
-
-      /* NEW: center content inside cards */
       display: flex; flex-direction: column; align-items: center; text-align: center;
     }
     .card h3 { font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }
@@ -85,9 +91,9 @@
       box-shadow: 0 6px 22px rgba(0,0,0,.28);
       position: relative; border: 1px solid rgba(255,255,255,.08);
     }
-    .chart-title {font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f8fafc; text-align: center;   /* NEW line to center the text */}
+    .chart-title {font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f8fafc; text-align: center;}
 
-    .export-buttons { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+    .export-buttons { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
     .export-btn {
       background: #22c55e; color: #0b1220; border: none; padding: 10px 15px;
       border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700;
@@ -113,13 +119,17 @@
     .data-table tr:hover { background-color: rgba(255,255,255,.06); }
 
     @media (max-width: 900px) {
-      .charts-grid { grid-template-columns: 1fr; }
-      .chart-canvas { height: 280px !important; }
-      .export-buttons { flex-direction: column; }
+      header { flex-direction: column; align-items: stretch; }
       .brand h1 { font-size: 1.1rem; }
       .brand img { height: 32px; }
-      .controls { flex-direction: column; }
-      .date-range-container { flex-direction: column; align-items: flex-start; }
+
+      /* Stack: country on top, then the two date pickers */
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      .date-range-container { justify-content: flex-start; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .chart-canvas { height: 280px !important; }
     }
   </style>
 </head>
@@ -127,21 +137,23 @@
   <div class="dashboard-container">
     <header>
       <div class="brand">
-        <!-- Put your logo file next to this HTML and keep the name below or change src -->
         <img src="https://drive.google.com/uc?export=view&id=1ExFKYpEh_9kBZMtY0Y02A04tSpE3wvLN"
-             alt="Equatorial Power logo" 
+             alt="Equatorial Power logo"
              style="height:50px; margin-right:10px;" />
-
         <h1>Equatorial Power – Countries Dashboard</h1>
       </div>
+
+      <!-- Controls -->
       <div class="controls">
         <select id="countryFilter">
           <option value="__ALL__">All Countries</option>
         </select>
+
         <div class="date-range-container">
           <span>From:</span>
           <input type="month" id="startDateFilter" value="2025-02">
         </div>
+
         <div class="date-range-container">
           <span>To:</span>
           <input type="month" id="endDateFilter" value="2025-06">
@@ -210,7 +222,6 @@
     // ===== CONFIG: Countries CSV =====
     const CSV_URL = "https://docs.google.com/spreadsheets/d/1Jl32qnvVwJKd7QduBCiMchIxZtbzHUTHOrKM2YWPdJw/export?format=csv&gid=1715890045";
 
-
     // Column constants for Countries tab
     const ENTITY_FIELD = "Country";
     const ALL_ENTITY = "All Countries";
@@ -264,8 +275,7 @@
 
     function parseMonthToDate(monthStr) {
       if (!monthStr) return new Date(NaN);
-      
-      // Try to parse MM/YYYY format
+
       if (monthStr.includes('/')) {
         const parts = monthStr.split('/');
         if (parts.length >= 2) {
@@ -274,8 +284,7 @@
           return new Date(year, month, 1);
         }
       }
-      
-      // Try to parse "MMM YYYY" format
+
       const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       const parts = monthStr.split(' ');
       if (parts.length >= 2) {
@@ -286,8 +295,13 @@
           return new Date(year, monthIndex, 1);
         }
       }
-      
       return new Date(NaN);
+    }
+
+    function toMonthInputValue(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
     }
 
     // Simple CSV parser with quoted fields support
@@ -375,7 +389,6 @@
     };
 
     const monthsSorted = (obj) => {
-      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       return Object.keys(obj).sort((a, b) => {
         const aDate = parseMonthToDate(a);
         const bDate = parseMonthToDate(b);
@@ -398,7 +411,7 @@
       return {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 16 } }, /* general top padding to keep legend away */
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { position: 'top', labels: { color: '#e5e7eb' } },
           datalabels: {
@@ -533,7 +546,6 @@
       const ctx = document.getElementById("customersChart").getContext("2d");
       if (customersChart) customersChart.destroy();
 
-      // Use common options but give this busy chart extra top padding
       const opts = makeCommonOptions({ yTitle: 'Customers' });
       opts.layout.padding.top = 28;
 
@@ -571,10 +583,8 @@
       const ctx = document.getElementById("customerRatiosChart").getContext("2d");
       if (customerRatiosChart) customerRatiosChart.destroy();
 
-      // Extra space above to keep legend separate from labels
       const opts = makeCommonOptions({ isPercent: true });
       opts.layout.padding.top = 28;
-      // Give a little headroom above 100% so labels don't clip under the legend
       opts.scales.y.suggestedMin = 0;
       opts.scales.y.suggestedMax = 105;
 
@@ -588,7 +598,7 @@
           ]
         },
         options: opts
-      );
+      });
     }
 
     function renderConsumptionPerUser() {
@@ -716,41 +726,144 @@
       document.getElementById('exportAllCharts').addEventListener('click', exportAllCharts);
     }
 
-    // ===== FILTERS & LOADING =====
+    // ===== SYNCED FILTERS =====
+    function getDateBoundsForCountry(countryVal) {
+      const rows = allData.filter(r => (countryVal === "__ALL__") || (r[ENTITY_FIELD] === countryVal));
+      const dates = rows.map(r => r["Month Date"]).filter(d => d instanceof Date && !isNaN(d));
+      if (!dates.length) return null;
+      const minD = new Date(Math.min(...dates));
+      const maxD = new Date(Math.max(...dates));
+      return { min: new Date(minD.getFullYear(), minD.getMonth(), 1), max: new Date(maxD.getFullYear(), maxD.getMonth(), 1) };
+    }
+
+    function getCountriesForRange(startDate, endDate) {
+      const set = new Set();
+      allData.forEach(r => {
+        const d = r["Month Date"];
+        if (d instanceof Date && !isNaN(d) && d >= startDate && d <= endDate) {
+          const c = r[ENTITY_FIELD];
+          if (c && c !== ALL_ENTITY) set.add(c);
+        }
+      });
+      return Array.from(set).sort();
+    }
+
+    function clampDateToBounds(dateObj, minD, maxD) {
+      if (dateObj < minD) return new Date(minD);
+      if (dateObj > maxD) return new Date(maxD);
+      return dateObj;
+    }
+
+    function syncOnCountryChange() {
+      const countrySel = document.getElementById("countryFilter");
+      const startEl = document.getElementById("startDateFilter");
+      const endEl = document.getElementById("endDateFilter");
+
+      const bounds = getDateBoundsForCountry(countrySel.value) || getDateBoundsForCountry("__ALL__");
+      if (bounds) {
+        // Set min/max attributes on month inputs
+        startEl.min = toMonthInputValue(bounds.min);
+        startEl.max = toMonthInputValue(bounds.max);
+        endEl.min = toMonthInputValue(bounds.min);
+        endEl.max = toMonthInputValue(bounds.max);
+
+        // Clamp current values
+        let start = new Date(startEl.value + "-01");
+        let end = new Date(endEl.value + "-01");
+        start = clampDateToBounds(start, bounds.min, bounds.max);
+        end = clampDateToBounds(end, bounds.min, bounds.max);
+
+        // Maintain start<=end
+        if (start > end) end = new Date(start);
+
+        startEl.value = toMonthInputValue(start);
+        endEl.value = toMonthInputValue(end);
+      }
+      applyFilters();
+    }
+
+    function syncOnDateChange() {
+      const startEl = document.getElementById("startDateFilter");
+      const endEl   = document.getElementById("endDateFilter");
+      const countryEl = document.getElementById("countryFilter");
+
+      // Parse dates (use first of month)
+      let start = new Date(startEl.value + "-01");
+      let end   = new Date(endEl.value + "-01");
+
+      // Ensure start <= end
+      if (start > end) {
+        end = new Date(start);
+        endEl.value = toMonthInputValue(end);
+      }
+
+      // Constrain country list to those in range
+      const allowedCountries = getCountriesForRange(start, end);
+      const prev = countryEl.value;
+      populateFilter("countryFilter", allowedCountries);
+
+      // If previous selection is no longer valid, fall back to __ALL__
+      if (![...countryEl.options].some(o => o.value === prev)) {
+        countryEl.value = "__ALL__";
+      } else {
+        countryEl.value = prev;
+      }
+
+      // Also set min/max bounds for the currently selected country (or all)
+      syncOnCountryChange();
+    }
+
     function applyFilters() {
       const countrySel = document.getElementById("countryFilter").value;
       const startDateInput = document.getElementById("startDateFilter").value;
       const endDateInput = document.getElementById("endDateFilter").value;
-      
-      // Parse the date inputs (format: YYYY-MM)
+
       const startYear = parseInt(startDateInput.split('-')[0], 10);
-      const startMonth = parseInt(startDateInput.split('-')[1], 10) - 1; // JS months are 0-indexed
+      const startMonth = parseInt(startDateInput.split('-')[1], 10) - 1;
       const startDate = new Date(startYear, startMonth, 1);
-      
+
       const endYear = parseInt(endDateInput.split('-')[0], 10);
       const endMonth = parseInt(endDateInput.split('-')[1], 10) - 1;
-      const endDate = new Date(endYear, endMonth + 1, 0); // Last day of the month
-      
+      const endDate = new Date(endYear, endMonth + 1, 0);
+
       filteredData = allData.filter(r => {
         const okCountry = (countrySel === "__ALL__") || (r[ENTITY_FIELD] === countrySel);
-        
-        // Check if the record's date is within the selected range
         const recordDate = r["Month Date"];
-        const okDate = !isNaN(recordDate) && recordDate >= startDate && recordDate <= endDate;
-        
+        const okDate = recordDate instanceof Date && !isNaN(recordDate) && recordDate >= startDate && recordDate <= endDate;
         return okCountry && okDate;
       });
+
       processDataAndRender();
     }
 
     function initFilters() {
       const countries = [...new Set(allData.map(r => r[ENTITY_FIELD]).filter(s => s && s !== ALL_ENTITY))].sort();
       populateFilter("countryFilter", countries);
-      
-      // Set up event listeners for all filters
-      document.getElementById("countryFilter").addEventListener("change", applyFilters);
-      document.getElementById("startDateFilter").addEventListener("change", applyFilters);
-      document.getElementById("endDateFilter").addEventListener("change", applyFilters);
+
+      // INITIAL min/max for date pickers = overall data bounds
+      const overall = getDateBoundsForCountry("__ALL__");
+      if (overall) {
+        const startEl = document.getElementById("startDateFilter");
+        const endEl = document.getElementById("endDateFilter");
+        startEl.min = toMonthInputValue(overall.min);
+        startEl.max = toMonthInputValue(overall.max);
+        endEl.min = toMonthInputValue(overall.min);
+        endEl.max = toMonthInputValue(overall.max);
+
+        // Clamp initial values into bounds
+        let s = new Date(startEl.value + "-01");
+        let e = new Date(endEl.value + "-01");
+        s = clampDateToBounds(s, overall.min, overall.max);
+        e = clampDateToBounds(e, overall.min, overall.max);
+        if (s > e) e = new Date(s);
+        startEl.value = toMonthInputValue(s);
+        endEl.value = toMonthInputValue(e);
+      }
+
+      // Listeners (two-way sync)
+      document.getElementById("countryFilter").addEventListener("change", syncOnCountryChange);
+      document.getElementById("startDateFilter").addEventListener("change", syncOnDateChange);
+      document.getElementById("endDateFilter").addEventListener("change", syncOnDateChange);
     }
 
     async function loadData() {
@@ -761,7 +874,7 @@
         allData = parseCSV(csv);
         filteredData = [...allData];
         initFilters();
-        processDataAndRender();
+        applyFilters(); // ensure initial render respects bounds & selection
         setupExportListeners();
       } catch (err) {
         console.error(err);
