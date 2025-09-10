@@ -15,7 +15,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
 
-    /* Emerald/teal background */
+    /* NEW: Emerald/teal background to differentiate from Sites dashboard */
     body {
       background: radial-gradient(1100px 680px at 18% -5%, #0f5138 0%, #063a2c 40%, #042a23 100%);
       color: #e5e7eb;
@@ -26,32 +26,41 @@
 
     header {
       display: flex; justify-content: space-between; align-items: center;
-      gap: 16px;
       margin-bottom: 30px; padding-bottom: 15px;
       border-bottom: 1px solid rgba(255,255,255,.12);
-      flex-wrap: wrap;
     }
+    /* Brand (logo + title) */
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand img { height: 40px; width: auto; display: block; filter: brightness(1.1) contrast(1.05); }
     .brand h1 { color: #ffffff; font-weight: 800; letter-spacing: .2px; }
 
-    .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    .control-group { display: flex; flex-direction: column; gap: 6px; }
-    .control-label { font-size: 12px; color: #d1fae5; font-weight: 700; letter-spacing: .2px; }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; }
 
-    /* Light controls so text is visible even before hover */
-    .controls select {
+    /* NEW: Light controls so text is visible even before hover */
+    .controls select, .controls input {
       padding: 10px 12px;
       border: 1px solid rgba(15,81,56,.35);
       border-radius: 10px;
-      background: #e8f5f1;
-      color: #0b2b22;
+      background: #e8f5f1;     /* light mint background */
+      color: #0b2b22;           /* dark text */
       font-weight: 600;
       min-width: 180px;
       outline: none;
     }
-    .controls select:focus { box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+    .controls select:focus, .controls input:focus { box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+    /* Ensure dropdown options are readable across browsers */
     .controls select option { color: #0b2b22; background: #ffffff; }
+
+    .date-range-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date-range-container span {
+      color: #e8f5f1;
+      font-weight: 600;
+    }
 
     .summary {
       display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
@@ -62,6 +71,8 @@
       padding: 20px; border-radius: 14px;
       box-shadow: 0 6px 20px rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.12);
+
+      /* NEW: center content inside cards */
       display: flex; flex-direction: column; align-items: center; text-align: center;
     }
     .card h3 { font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }
@@ -74,16 +85,15 @@
       box-shadow: 0 6px 22px rgba(0,0,0,.28);
       position: relative; border: 1px solid rgba(255,255,255,.08);
     }
-    .chart-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f8fafc; text-align: center; }
+    .chart-title {font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f8fafc; text-align: center;   /* NEW line to center the text */}
 
-    .export-buttons { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
+    .export-buttons { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
     .export-btn {
       background: #22c55e; color: #0b1220; border: none; padding: 10px 15px;
       border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700;
       box-shadow: 0 8px 20px rgba(34,197,94,.25);
     }
     .export-btn:hover { filter: brightness(1.08); }
-
     .chart-export {
       position: absolute; top: 10px; right: 10px;
       background: rgba(255,255,255,.12); color: #fff; border: none;
@@ -108,7 +118,8 @@
       .export-buttons { flex-direction: column; }
       .brand h1 { font-size: 1.1rem; }
       .brand img { height: 32px; }
-      .controls { gap: 10px; }
+      .controls { flex-direction: column; }
+      .date-range-container { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -116,29 +127,24 @@
   <div class="dashboard-container">
     <header>
       <div class="brand">
+        <!-- Put your logo file next to this HTML and keep the name below or change src -->
         <img src="https://drive.google.com/uc?export=view&id=1ExFKYpEh_9kBZMtY0Y02A04tSpE3wvLN"
-             alt="Equatorial Power logo"
+             alt="Equatorial Power logo" 
              style="height:50px; margin-right:10px;" />
+
         <h1>Equatorial Power – Countries Dashboard</h1>
       </div>
-
-      <!-- Filters -->
       <div class="controls">
-        <div class="control-group">
-          <span class="control-label">Country</span>
-          <select id="countryFilter">
-            <option value="__ALL__">All Countries</option>
-          </select>
+        <select id="countryFilter">
+          <option value="__ALL__">All Countries</option>
+        </select>
+        <div class="date-range-container">
+          <span>From:</span>
+          <input type="month" id="startDateFilter" value="2025-02">
         </div>
-
-        <div class="control-group">
-          <span class="control-label">From</span>
-          <select id="startMonth"></select>
-        </div>
-
-        <div class="control-group">
-          <span class="control-label">To</span>
-          <select id="endMonth"></select>
+        <div class="date-range-container">
+          <span>To:</span>
+          <input type="month" id="endDateFilter" value="2025-06">
         </div>
       </div>
     </header>
@@ -202,13 +208,14 @@
 
   <script>
     // ===== CONFIG: Countries CSV =====
-    // *** ORIGINAL, WORKING URL (unchanged) ***
-    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQprx65EoDU44iCaUeroSCc5difza-1mO4pF6eFyNfIsL0rESnstChFK652px5huTVfP_Xdrt6BY0vO/pub?gid=1715890045&single=true&output=csv";
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/1Jl32qnvVwJKd7QduBCiMchIxZtbzHUTHOrKM2YWPdJw/export?format=csv&gid=1715890045";
+
 
     // Column constants for Countries tab
     const ENTITY_FIELD = "Country";
     const ALL_ENTITY = "All Countries";
 
+    // Register datalabels plugin
     Chart.register(ChartDataLabels);
 
     // ===== STATE =====
@@ -255,17 +262,35 @@
       return `${monthNames[month]} ${year}`;
     }
 
-    // Comparable month key (YYYYMM) + label
-    function monthKey(raw) {
-      if (!raw) return { key: 0, label: "" };
-      const [m,,y] = String(raw).split('/');
-      const mm = parseInt(m, 10);
-      const yy = parseInt(y, 10);
-      const label = formatMonth(raw);
-      return { key: yy * 100 + mm, label };
+    function parseMonthToDate(monthStr) {
+      if (!monthStr) return new Date(NaN);
+      
+      // Try to parse MM/YYYY format
+      if (monthStr.includes('/')) {
+        const parts = monthStr.split('/');
+        if (parts.length >= 2) {
+          const month = parseInt(parts[0], 10) - 1;
+          const year = parseInt(parts[2] || parts[1], 10);
+          return new Date(year, month, 1);
+        }
+      }
+      
+      // Try to parse "MMM YYYY" format
+      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const parts = monthStr.split(' ');
+      if (parts.length >= 2) {
+        const monthName = parts[0];
+        const year = parseInt(parts[1], 10);
+        const monthIndex = monthNames.findIndex(m => m.toLowerCase() === monthName.toLowerCase());
+        if (monthIndex !== -1 && !isNaN(year)) {
+          return new Date(year, monthIndex, 1);
+        }
+      }
+      
+      return new Date(NaN);
     }
 
-    // CSV parser with quoted fields
+    // Simple CSV parser with quoted fields support
     function parseCSV(csvText) {
       const lines = csvText.replace(/\r/g, "").split("\n");
       if (!lines.length) return [];
@@ -290,7 +315,10 @@
         const obj = {};
         headers.forEach((h, idx) => { obj[h.trim()] = (row[idx] ?? "").trim(); });
 
-        if (obj["Month"]) obj["Formatted Month"] = formatMonth(obj["Month"]);
+        if (obj["Month"]) {
+          obj["Formatted Month"] = formatMonth(obj["Month"]);
+          obj["Month Date"] = parseMonthToDate(obj["Month"]);
+        }
 
         obj["Monthly Total (USD)"] = currencyToNumber(obj["Monthly Total (USD)"]);
         obj["Planned Revenue (USD)"] = currencyToNumber(obj["Planned Revenue (USD)"]);
@@ -307,9 +335,8 @@
       return out;
     }
 
-    // ===== FILTER UI POPULATION =====
-    function populateCountryFilter() {
-      const sel = document.getElementById("countryFilter");
+    function populateFilter(selectId, values) {
+      const sel = document.getElementById(selectId);
       const current = sel.value;
       sel.innerHTML = "";
       const makeOpt = (v, label) => {
@@ -317,42 +344,25 @@
         o.value = v; o.textContent = label ?? v;
         sel.appendChild(o);
       };
-      makeOpt("__ALL__", "All Countries");
-      const countries = [...new Set(allData.map(r => r[ENTITY_FIELD]).filter(s => s && s !== ALL_ENTITY))].sort();
-      countries.forEach(v => makeOpt(v, v));
+      if (selectId === "countryFilter") makeOpt("__ALL__", "All Countries");
+      values.forEach(v => makeOpt(v, v));
       if ([...sel.options].some(o => o.value === current)) sel.value = current;
     }
 
-    function populateRangeFilters() {
-      const startSel = document.getElementById("startMonth");
-      const endSel = document.getElementById("endMonth");
-      const currentStart = startSel.value; const currentEnd = endSel.value;
-      startSel.innerHTML = ""; endSel.innerHTML = "";
+    function updateSummaryCards() {
+      const rows = filteredData.filter(d => d[ENTITY_FIELD] && d[ENTITY_FIELD] !== ALL_ENTITY);
+      const totalRevenue = rows.reduce((s, r) => s + (r["Monthly Total (USD)"] || 0), 0);
+      const totalEnergy = rows.reduce((s, r) => s + (r["Consumed kWh"] || 0), 0);
+      const maxCustomers = rows.reduce((max, r) => Math.max(max, r["Active Customers"] || 0), 0);
+      const arpus = rows.map(r => r["ARPU (USD)"]).filter(Number.isFinite);
+      const avgARPU = arpus.length ? arpus.reduce((s, x) => s + x, 0) / arpus.length : 0;
 
-      const uniq = new Map();
-      allData.forEach(r => {
-        const mk = monthKey(r["Month"]);
-        if (mk.key) uniq.set(mk.key, mk.label);
-      });
-      const keys = [...uniq.keys()].sort((a,b)=>a-b);
-
-      const makeOpt = (sel, val, label) => {
-        const o = document.createElement("option");
-        o.value = String(val); o.textContent = label;
-        sel.appendChild(o);
-      };
-
-      keys.forEach(k => {
-        makeOpt(startSel, k, uniq.get(k));
-        makeOpt(endSel,   k, uniq.get(k));
-      });
-
-      const minKey = keys[0], maxKey = keys[keys.length - 1];
-      startSel.value = [...startSel.options].some(o=>o.value===currentStart) ? currentStart : String(minKey);
-      endSel.value   = [...endSel.options].some(o=>o.value===currentEnd) ? currentEnd   : String(maxKey);
+      document.getElementById("totalRevenue").textContent = fmtCurrency(totalRevenue);
+      document.getElementById("totalEnergy").textContent = fmtNum(totalEnergy);
+      document.getElementById("maxCustomers").textContent = fmtNum(maxCustomers);
+      document.getElementById("avgARPU").textContent = (avgARPU ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
     }
 
-    // ===== AGGREGATION HELPERS (by Month) =====
     const groupByMonth = (rows) => {
       const m = {};
       rows.forEach(r => {
@@ -367,10 +377,9 @@
     const monthsSorted = (obj) => {
       const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       return Object.keys(obj).sort((a, b) => {
-        const [aMonth, aYear] = a.split(' ');
-        const [bMonth, bYear] = b.split(' ');
-        if (+aYear !== +bYear) return +aYear - +bYear;
-        return monthNames.indexOf(aMonth) - monthNames.indexOf(bMonth);
+        const aDate = parseMonthToDate(a);
+        const bDate = parseMonthToDate(b);
+        return aDate - bDate;
       });
     };
 
@@ -389,7 +398,7 @@
       return {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 16 } },
+        layout: { padding: { top: 16 } }, /* general top padding to keep legend away */
         plugins: {
           legend: { position: 'top', labels: { color: '#e5e7eb' } },
           datalabels: {
@@ -524,6 +533,7 @@
       const ctx = document.getElementById("customersChart").getContext("2d");
       if (customersChart) customersChart.destroy();
 
+      // Use common options but give this busy chart extra top padding
       const opts = makeCommonOptions({ yTitle: 'Customers' });
       opts.layout.padding.top = 28;
 
@@ -561,8 +571,10 @@
       const ctx = document.getElementById("customerRatiosChart").getContext("2d");
       if (customerRatiosChart) customerRatiosChart.destroy();
 
+      // Extra space above to keep legend separate from labels
       const opts = makeCommonOptions({ isPercent: true });
       opts.layout.padding.top = 28;
+      // Give a little headroom above 100% so labels don't clip under the legend
       opts.scales.y.suggestedMin = 0;
       opts.scales.y.suggestedMax = 105;
 
@@ -606,7 +618,7 @@
       const body = document.getElementById("tableBody");
       head.innerHTML = ""; body.innerHTML = "";
 
-      const headers = Object.keys(allData[0]).filter(h => h !== "Formatted Month");
+      const headers = Object.keys(allData[0]).filter(h => h !== "Formatted Month" && h !== "Month Date");
       const displayHeaders = headers.map(h => h === "Month" ? "Formatted Month" : h);
 
       const trh = document.createElement("tr");
@@ -659,7 +671,7 @@
     }
     function exportTableToCSV() {
       if (!filteredData.length) return;
-      const headers = Object.keys(allData[0]).filter(h => h !== "Formatted Month");
+      const headers = Object.keys(allData[0]).filter(h => h !== "Formatted Month" && h !== "Month Date");
       const displayHeaders = headers.map(h => h === "Month" ? "Formatted Month" : h);
       let csvContent = displayHeaders.map(h => h === "Formatted Month" ? "Month" : h).join(',') + '\n';
       filteredData.forEach(row => {
@@ -679,7 +691,7 @@
     }
     function exportTableToExcel() {
       if (!filteredData.length) return;
-      const headers = Object.keys(allData[0]).filter(h => h !== "Formatted Month");
+      const headers = Object.keys(allData[0]).filter(h => h !== "Formatted Month" && h !== "Month Date");
       const data = filteredData.map(row => {
         const newRow = {};
         headers.forEach(h => { newRow[h === "Month" ? "Month" : h] = h === "Month" ? row["Formatted Month"] || row[h] : row[h]; });
@@ -704,42 +716,40 @@
       document.getElementById('exportAllCharts').addEventListener('click', exportAllCharts);
     }
 
-    // ===== FILTERING LOGIC (Country + Date Range) =====
+    // ===== FILTERS & LOADING =====
     function applyFilters() {
       const countrySel = document.getElementById("countryFilter").value;
-      const startSel = document.getElementById("startMonth");
-      const endSel = document.getElementById("endMonth");
-
-      let startKey = parseInt(startSel.value, 10);
-      let endKey = parseInt(endSel.value, 10);
-      if (isNaN(startKey) || isNaN(endKey)) {
-        populateRangeFilters();
-        startKey = parseInt(startSel.value, 10);
-        endKey = parseInt(endSel.value, 10);
-      }
-      if (startKey > endKey) {
-        const tmp = startKey; startKey = endKey; endKey = tmp;
-        startSel.value = String(startKey);
-        endSel.value = String(endKey);
-      }
-
+      const startDateInput = document.getElementById("startDateFilter").value;
+      const endDateInput = document.getElementById("endDateFilter").value;
+      
+      // Parse the date inputs (format: YYYY-MM)
+      const startYear = parseInt(startDateInput.split('-')[0], 10);
+      const startMonth = parseInt(startDateInput.split('-')[1], 10) - 1; // JS months are 0-indexed
+      const startDate = new Date(startYear, startMonth, 1);
+      
+      const endYear = parseInt(endDateInput.split('-')[0], 10);
+      const endMonth = parseInt(endDateInput.split('-')[1], 10) - 1;
+      const endDate = new Date(endYear, endMonth + 1, 0); // Last day of the month
+      
       filteredData = allData.filter(r => {
         const okCountry = (countrySel === "__ALL__") || (r[ENTITY_FIELD] === countrySel);
-        const mk = monthKey(r["Month"]).key;
-        const okRange = mk >= startKey && mk <= endKey;
-        return okCountry && okRange;
+        
+        // Check if the record's date is within the selected range
+        const recordDate = r["Month Date"];
+        const okDate = !isNaN(recordDate) && recordDate >= startDate && recordDate <= endDate;
+        
+        return okCountry && okDate;
       });
-
       processDataAndRender();
     }
 
     function initFilters() {
-      populateCountryFilter();
-      populateRangeFilters();
-
-      document.getElementById("countryFilter").addEventListener("change", applyFilters);
-      document.getElementById("startMonth").addEventListener("change", applyFilters);
-      document.getElementById("endMonth").addEventListener("change", applyFilters);
+      const countries = [...new Set(allData.map(r => r[ENTITY_FIELD]).filter(s => s && s !== ALL_ENTITY))].sort();
+      populateFilter("countryFilter", countries);
+      
+      // Set up date range filter listeners
+      document.getElementById("startDateFilter").addEventListener("change", applyFilters);
+      document.getElementById("endDateFilter").addEventListener("change", applyFilters);
     }
 
     async function loadData() {
@@ -750,11 +760,11 @@
         allData = parseCSV(csv);
         filteredData = [...allData];
         initFilters();
-        applyFilters();           // apply country + range
+        processDataAndRender();
         setupExportListeners();
       } catch (err) {
         console.error(err);
-        alert("Failed to load Countries data. Please ensure the Google Sheet tab is shared for CSV access.");
+        alert("Failed to load Countries data. Please ensure the Google Sheet tab is published as CSV.");
       }
     }
 
@@ -763,5 +773,3 @@
   </script>
 </body>
 </html>
-
-
