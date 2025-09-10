@@ -31,7 +31,6 @@
       border-bottom: 1px solid rgba(255,255,255,.12);
       flex-wrap: wrap;
     }
-    /* Brand (logo + title) */
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand img { height: 40px; width: auto; display: block; filter: brightness(1.1) contrast(1.05); }
     .brand h1 { color: #ffffff; font-weight: 800; letter-spacing: .2px; }
@@ -45,8 +44,8 @@
       padding: 10px 12px;
       border: 1px solid rgba(15,81,56,.35);
       border-radius: 10px;
-      background: #e8f5f1;     /* light mint background */
-      color: #0b2b22;           /* dark text */
+      background: #e8f5f1;
+      color: #0b2b22;
       font-weight: 600;
       min-width: 180px;
       outline: none;
@@ -117,7 +116,6 @@
   <div class="dashboard-container">
     <header>
       <div class="brand">
-        <!-- Logo from Google Drive direct link -->
         <img src="https://drive.google.com/uc?export=view&id=1ExFKYpEh_9kBZMtY0Y02A04tSpE3wvLN"
              alt="Equatorial Power logo"
              style="height:50px; margin-right:10px;" />
@@ -204,13 +202,13 @@
 
   <script>
     // ===== CONFIG: Countries CSV =====
+    // *** ORIGINAL, WORKING URL (unchanged) ***
     const CSV_URL = "https://docs.google.com/spreadsheets/d/1Jl32qnvVwJKd7QduBCiMchIxZtbzHUTHOrKM2YWPdJw/export?format=csv&gid=1715890045";
 
     // Column constants for Countries tab
     const ENTITY_FIELD = "Country";
     const ALL_ENTITY = "All Countries";
 
-    // Register datalabels plugin
     Chart.register(ChartDataLabels);
 
     // ===== STATE =====
@@ -257,7 +255,7 @@
       return `${monthNames[month]} ${year}`;
     }
 
-    // Convert "M/D/YYYY" into comparable key (YYYYMM) and label "Mon YYYY"
+    // Comparable month key (YYYYMM) + label
     function monthKey(raw) {
       if (!raw) return { key: 0, label: "" };
       const [m,,y] = String(raw).split('/');
@@ -267,7 +265,7 @@
       return { key: yy * 100 + mm, label };
     }
 
-    // Simple CSV parser with quoted fields support
+    // CSV parser with quoted fields
     function parseCSV(csvText) {
       const lines = csvText.replace(/\r/g, "").split("\n");
       if (!lines.length) return [];
@@ -331,7 +329,6 @@
       const currentStart = startSel.value; const currentEnd = endSel.value;
       startSel.innerHTML = ""; endSel.innerHTML = "";
 
-      // collect unique months with keys and labels
       const uniq = new Map();
       allData.forEach(r => {
         const mk = monthKey(r["Month"]);
@@ -350,7 +347,6 @@
         makeOpt(endSel,   k, uniq.get(k));
       });
 
-      // default to full span or preserve previous if still valid
       const minKey = keys[0], maxKey = keys[keys.length - 1];
       startSel.value = [...startSel.options].some(o=>o.value===currentStart) ? currentStart : String(minKey);
       endSel.value   = [...endSel.options].some(o=>o.value===currentEnd) ? currentEnd   : String(maxKey);
@@ -716,12 +712,11 @@
 
       let startKey = parseInt(startSel.value, 10);
       let endKey = parseInt(endSel.value, 10);
-      if (isNaN(startKey) || isNaN(endKey)) { // fallback to full range if missing
+      if (isNaN(startKey) || isNaN(endKey)) {
         populateRangeFilters();
         startKey = parseInt(startSel.value, 10);
         endKey = parseInt(endSel.value, 10);
       }
-      // If range is reversed, auto-swap to keep it valid
       if (startKey > endKey) {
         const tmp = startKey; startKey = endKey; endKey = tmp;
         startSel.value = String(startKey);
@@ -755,7 +750,7 @@
         allData = parseCSV(csv);
         filteredData = [...allData];
         initFilters();
-        applyFilters();           // ensure initial range/country is applied
+        applyFilters();           // apply country + range
         setupExportListeners();
       } catch (err) {
         console.error(err);
@@ -768,5 +763,3 @@
   </script>
 </body>
 </html>
-
-
