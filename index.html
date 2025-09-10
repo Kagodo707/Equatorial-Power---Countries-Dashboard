@@ -15,7 +15,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
 
-    /* NEW: Emerald/teal background to differentiate from Sites dashboard */
+    /* Emerald/teal background */
     body {
       background: radial-gradient(1100px 680px at 18% -5%, #0f5138 0%, #063a2c 40%, #042a23 100%);
       color: #e5e7eb;
@@ -26,17 +26,21 @@
 
     header {
       display: flex; justify-content: space-between; align-items: center;
+      gap: 16px;
       margin-bottom: 30px; padding-bottom: 15px;
       border-bottom: 1px solid rgba(255,255,255,.12);
+      flex-wrap: wrap;
     }
     /* Brand (logo + title) */
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand img { height: 40px; width: auto; display: block; filter: brightness(1.1) contrast(1.05); }
     .brand h1 { color: #ffffff; font-weight: 800; letter-spacing: .2px; }
 
-    .controls { display: flex; gap: 12px; flex-wrap: wrap; }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+    .control-label { font-size: 12px; color: #d1fae5; font-weight: 700; letter-spacing: .2px; }
 
-    /* NEW: Light controls so text is visible even before hover */
+    /* Light controls so text is visible even before hover */
     .controls select {
       padding: 10px 12px;
       border: 1px solid rgba(15,81,56,.35);
@@ -48,7 +52,6 @@
       outline: none;
     }
     .controls select:focus { box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
-    /* Ensure dropdown options are readable across browsers */
     .controls select option { color: #0b2b22; background: #ffffff; }
 
     .summary {
@@ -60,8 +63,6 @@
       padding: 20px; border-radius: 14px;
       box-shadow: 0 6px 20px rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.12);
-
-      /* NEW: center content inside cards */
       display: flex; flex-direction: column; align-items: center; text-align: center;
     }
     .card h3 { font-size: 13px; color: #cbd5e1; margin-bottom: 8px; }
@@ -74,15 +75,16 @@
       box-shadow: 0 6px 22px rgba(0,0,0,.28);
       position: relative; border: 1px solid rgba(255,255,255,.08);
     }
-    .chart-title {font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f8fafc; text-align: center;   /* NEW line to center the text */}
+    .chart-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f8fafc; text-align: center; }
 
-    .export-buttons { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; }
+    .export-buttons { display: flex; justify-content: flex-end; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
     .export-btn {
       background: #22c55e; color: #0b1220; border: none; padding: 10px 15px;
       border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 700;
       box-shadow: 0 8px 20px rgba(34,197,94,.25);
     }
     .export-btn:hover { filter: brightness(1.08); }
+
     .chart-export {
       position: absolute; top: 10px; right: 10px;
       background: rgba(255,255,255,.12); color: #fff; border: none;
@@ -107,6 +109,7 @@
       .export-buttons { flex-direction: column; }
       .brand h1 { font-size: 1.1rem; }
       .brand img { height: 32px; }
+      .controls { gap: 10px; }
     }
   </style>
 </head>
@@ -114,20 +117,31 @@
   <div class="dashboard-container">
     <header>
       <div class="brand">
-        <!-- Put your logo file next to this HTML and keep the name below or change src -->
+        <!-- Logo from Google Drive direct link -->
         <img src="https://drive.google.com/uc?export=view&id=1ExFKYpEh_9kBZMtY0Y02A04tSpE3wvLN"
-             alt="Equatorial Power logo" 
+             alt="Equatorial Power logo"
              style="height:50px; margin-right:10px;" />
-
         <h1>Equatorial Power – Countries Dashboard</h1>
       </div>
+
+      <!-- Filters -->
       <div class="controls">
-        <select id="countryFilter">
-          <option value="__ALL__">All Countries</option>
-        </select>
-        <select id="monthFilter">
-          <option value="__ALL__">All months</option>
-        </select>
+        <div class="control-group">
+          <span class="control-label">Country</span>
+          <select id="countryFilter">
+            <option value="__ALL__">All Countries</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">From</span>
+          <select id="startMonth"></select>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">To</span>
+          <select id="endMonth"></select>
+        </div>
       </div>
     </header>
 
@@ -190,8 +204,8 @@
 
   <script>
     // ===== CONFIG: Countries CSV =====
+    // Uses Drive-style export (sheet must be shared "Anyone with the link – Viewer")
     const CSV_URL = "https://docs.google.com/spreadsheets/d/1Jl32qnvVwJKd7QduBCiMchIxZtbzHUTHOrKM2YWPdJw/export?format=csv&gid=1715890045";
-
 
     // Column constants for Countries tab
     const ENTITY_FIELD = "Country";
@@ -244,6 +258,16 @@
       return `${monthNames[month]} ${year}`;
     }
 
+    // Convert "M/D/YYYY" into comparable key (YYYYMM) and label "Mon YYYY"
+    function monthKey(raw) {
+      if (!raw) return { key: 0, label: "" };
+      const [m,,y] = String(raw).split('/');
+      const mm = parseInt(m, 10);
+      const yy = parseInt(y, 10);
+      const label = formatMonth(raw);
+      return { key: yy * 100 + mm, label };
+    }
+
     // Simple CSV parser with quoted fields support
     function parseCSV(csvText) {
       const lines = csvText.replace(/\r/g, "").split("\n");
@@ -286,8 +310,9 @@
       return out;
     }
 
-    function populateFilter(selectId, values) {
-      const sel = document.getElementById(selectId);
+    // ===== FILTER UI POPULATION =====
+    function populateCountryFilter() {
+      const sel = document.getElementById("countryFilter");
       const current = sel.value;
       sel.innerHTML = "";
       const makeOpt = (v, label) => {
@@ -295,26 +320,44 @@
         o.value = v; o.textContent = label ?? v;
         sel.appendChild(o);
       };
-      if (selectId === "countryFilter") makeOpt("__ALL__", "All Countries");
-      if (selectId === "monthFilter") makeOpt("__ALL__", "All months");
-      values.forEach(v => makeOpt(v, v));
+      makeOpt("__ALL__", "All Countries");
+      const countries = [...new Set(allData.map(r => r[ENTITY_FIELD]).filter(s => s && s !== ALL_ENTITY))].sort();
+      countries.forEach(v => makeOpt(v, v));
       if ([...sel.options].some(o => o.value === current)) sel.value = current;
     }
 
-    function updateSummaryCards() {
-      const rows = filteredData.filter(d => d[ENTITY_FIELD] && d[ENTITY_FIELD] !== ALL_ENTITY);
-      const totalRevenue = rows.reduce((s, r) => s + (r["Monthly Total (USD)"] || 0), 0);
-      const totalEnergy = rows.reduce((s, r) => s + (r["Consumed kWh"] || 0), 0);
-      const maxCustomers = rows.reduce((max, r) => Math.max(max, r["Active Customers"] || 0), 0);
-      const arpus = rows.map(r => r["ARPU (USD)"]).filter(Number.isFinite);
-      const avgARPU = arpus.length ? arpus.reduce((s, x) => s + x, 0) / arpus.length : 0;
+    function populateRangeFilters() {
+      const startSel = document.getElementById("startMonth");
+      const endSel = document.getElementById("endMonth");
+      const currentStart = startSel.value; const currentEnd = endSel.value;
+      startSel.innerHTML = ""; endSel.innerHTML = "";
 
-      document.getElementById("totalRevenue").textContent = fmtCurrency(totalRevenue);
-      document.getElementById("totalEnergy").textContent = fmtNum(totalEnergy);
-      document.getElementById("maxCustomers").textContent = fmtNum(maxCustomers);
-      document.getElementById("avgARPU").textContent = (avgARPU ?? 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+      // collect unique months with keys and labels
+      const uniq = new Map();
+      allData.forEach(r => {
+        const mk = monthKey(r["Month"]);
+        if (mk.key) uniq.set(mk.key, mk.label);
+      });
+      const keys = [...uniq.keys()].sort((a,b)=>a-b);
+
+      const makeOpt = (sel, val, label) => {
+        const o = document.createElement("option");
+        o.value = String(val); o.textContent = label;
+        sel.appendChild(o);
+      };
+
+      keys.forEach(k => {
+        makeOpt(startSel, k, uniq.get(k));
+        makeOpt(endSel,   k, uniq.get(k));
+      });
+
+      // default to full span or preserve previous if still valid
+      const minKey = keys[0], maxKey = keys[keys.length - 1];
+      startSel.value = [...startSel.options].some(o=>o.value===currentStart) ? currentStart : String(minKey);
+      endSel.value   = [...endSel.options].some(o=>o.value===currentEnd) ? currentEnd   : String(maxKey);
     }
 
+    // ===== AGGREGATION HELPERS (by Month) =====
     const groupByMonth = (rows) => {
       const m = {};
       rows.forEach(r => {
@@ -351,7 +394,7 @@
       return {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 16 } }, /* general top padding to keep legend away */
+        layout: { padding: { top: 16 } },
         plugins: {
           legend: { position: 'top', labels: { color: '#e5e7eb' } },
           datalabels: {
@@ -486,7 +529,6 @@
       const ctx = document.getElementById("customersChart").getContext("2d");
       if (customersChart) customersChart.destroy();
 
-      // Use common options but give this busy chart extra top padding
       const opts = makeCommonOptions({ yTitle: 'Customers' });
       opts.layout.padding.top = 28;
 
@@ -524,10 +566,8 @@
       const ctx = document.getElementById("customerRatiosChart").getContext("2d");
       if (customerRatiosChart) customerRatiosChart.destroy();
 
-      // Extra space above to keep legend separate from labels
       const opts = makeCommonOptions({ isPercent: true });
       opts.layout.padding.top = 28;
-      // Give a little headroom above 100% so labels don't clip under the legend
       opts.scales.y.suggestedMin = 0;
       opts.scales.y.suggestedMax = 105;
 
@@ -669,25 +709,43 @@
       document.getElementById('exportAllCharts').addEventListener('click', exportAllCharts);
     }
 
-    // ===== FILTERS & LOADING =====
+    // ===== FILTERING LOGIC (Country + Date Range) =====
     function applyFilters() {
       const countrySel = document.getElementById("countryFilter").value;
-      const monthSel = document.getElementById("monthFilter").value;
+      const startSel = document.getElementById("startMonth");
+      const endSel = document.getElementById("endMonth");
+
+      let startKey = parseInt(startSel.value, 10);
+      let endKey = parseInt(endSel.value, 10);
+      if (isNaN(startKey) || isNaN(endKey)) { // fallback to full range if missing
+        populateRangeFilters();
+        startKey = parseInt(startSel.value, 10);
+        endKey = parseInt(endSel.value, 10);
+      }
+      // If range is reversed, auto-swap to keep it valid
+      if (startKey > endKey) {
+        const tmp = startKey; startKey = endKey; endKey = tmp;
+        startSel.value = String(startKey);
+        endSel.value = String(endKey);
+      }
+
       filteredData = allData.filter(r => {
         const okCountry = (countrySel === "__ALL__") || (r[ENTITY_FIELD] === countrySel);
-        const okMonth = (monthSel === "__ALL__") || (r["Month"] === monthSel);
-        return okCountry && okMonth;
+        const mk = monthKey(r["Month"]).key;
+        const okRange = mk >= startKey && mk <= endKey;
+        return okCountry && okRange;
       });
+
       processDataAndRender();
     }
 
     function initFilters() {
-      const countries = [...new Set(allData.map(r => r[ENTITY_FIELD]).filter(s => s && s !== ALL_ENTITY))].sort();
-      const months = [...new Set(allData.map(r => r["Formatted Month"] || r["Month"]).filter(Boolean))].sort();
-      populateFilter("countryFilter", countries);
-      populateFilter("monthFilter", months);
+      populateCountryFilter();
+      populateRangeFilters();
+
       document.getElementById("countryFilter").addEventListener("change", applyFilters);
-      document.getElementById("monthFilter").addEventListener("change", applyFilters);
+      document.getElementById("startMonth").addEventListener("change", applyFilters);
+      document.getElementById("endMonth").addEventListener("change", applyFilters);
     }
 
     async function loadData() {
@@ -698,11 +756,11 @@
         allData = parseCSV(csv);
         filteredData = [...allData];
         initFilters();
-        processDataAndRender();
+        applyFilters();           // ensure initial range/country is applied
         setupExportListeners();
       } catch (err) {
         console.error(err);
-        alert("Failed to load Countries data. Please ensure the Google Sheet tab is published as CSV.");
+        alert("Failed to load Countries data. Please ensure the Google Sheet tab is shared for CSV access.");
       }
     }
 
@@ -711,6 +769,3 @@
   </script>
 </body>
 </html>
-
-
-
