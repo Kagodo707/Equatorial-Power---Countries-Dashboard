@@ -889,9 +889,9 @@
         }
         const isPortfolio = isAggregateScope(selectedSite);
         const card = head.closest('.chart-card, .table-card');
-        const fixedScope = card && ['siteConsumptionCard','siteRevenueCard'].includes(card.id) ? 'All sites' : card && ['bugarulaGenerationCard','bugarulaFuelCard'].includes(card.id) ? 'Bugarula' : '';
+        const fixedScope = card && ['siteConsumptionCard','siteRevenueCard'].includes(card.id) ? scopeLabel(selectedSite) : '';
         const label = fixedScope || scopeLabel(selectedSite);
-        const badgeIsPortfolio = fixedScope === 'All sites' || (!fixedScope && isPortfolio);
+        const badgeIsPortfolio = isPortfolio;
         badge.className = `scope-badge dynamic-scope-badge ${badgeIsPortfolio ? 'scope-portfolio' : 'scope-site'}`;
         badge.textContent = label;
       });
@@ -1129,8 +1129,14 @@
       toggleBugarulaCards(selectedSite);
       updateChartScopeBadges(selectedSite);
 
-      const compareMonthSort = latestMonthSort(siteRowsDateRange);
-      const comparisonRows = aggregateByMonthAndSite(siteRowsDateRange).filter(r => r.month_sort === compareMonthSort).sort((a,b) => (b.consumption_kwh||0) - (a.consumption_kwh||0));
+      // DRC and Lolwe report on different cadences (DRC currently lags
+      // Lolwe's live feed), so the "latest month" for this comparison must
+      // come from whichever country is actually selected - using the
+      // global latest month here would show September (Lolwe-only) even
+      // when DRC is selected, making the DRC comparison look empty/stuck.
+      const comparisonPool = isAggregateScope(selectedSite) ? siteRowsDateRange : siteRowsDateRange.filter(r => isInScope(r.site, selectedSite));
+      const compareMonthSort = latestMonthSort(comparisonPool);
+      const comparisonRows = aggregateByMonthAndSite(comparisonPool).filter(r => r.month_sort === compareMonthSort).sort((a,b) => (b.consumption_kwh||0) - (a.consumption_kwh||0));
       const comparisonMonth = comparisonRows[0]?.month || '—';
       const chartTitles = updateChartTitles(selectedSite, comparisonMonth);
       document.getElementById('generationScopePill').textContent = `${scopeLabel(selectedSite)} scope`;
